@@ -159,14 +159,14 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.13, y: 0.16}
+    oldSize: {x: 1, y: 1}
     newSize: {x: 0.13, y: 0.16}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.13, y: 0.16}
+  m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
 --- !u!114 &450849606
 MonoBehaviour:
@@ -243,7 +243,7 @@ Transform:
   m_GameObject: {fileID: 450849604}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.5, y: -1.5, z: 0}
-  m_LocalScale: {x: 5.5, y: 5.5, z: 5.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1444450060}
@@ -345,7 +345,7 @@ GameObject:
   - component: {fileID: 1444450060}
   - component: {fileID: 1444450061}
   m_Layer: 0
-  m_Name: selection_square
+  m_Name: selection_box
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -360,7 +360,7 @@ Transform:
   m_GameObject: {fileID: 1444450059}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.18181819, y: 0.18181819, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 450849608}
@@ -404,11 +404,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -278192017
-  m_SortingLayer: 2
+  m_SortingLayerID: 1548814375
+  m_SortingLayer: 4
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.8679245, g: 0.31523672, b: 0.40282017, a: 1}
+  m_Sprite: {fileID: 21300000, guid: ca155fd827016ed4784c4e279bb18093, type: 3}
+  m_Color: {r: 1, g: 0.9911465, b: 0.5613208, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -466,3 +466,5 @@ MonoBehaviour:
   _height: 10
   _topLeft: {x: -9.5, y: 4.5}
   _tile: {fileID: 1336558243967266419, guid: 7202fc729ce89f140aadd129851e9977, type: 3}
+  _forestSprite: {fileID: 21300000, guid: fb51339f1674032479b28680db1dbdca, type: 3}
+  _highlightBox: {fileID: 3761739246879157791, guid: b69305d3fc783d84dad6564b75aef848, type: 3}

@@ -7,12 +7,13 @@ using System;
 using JetBrains.Annotations;
 using UnityEngine.Tilemaps;
 using UnityEngine.XR;
+using Unity.VisualScripting;
 
 #nullable enable
 public class Unit : MonoBehaviour
 {
 	[SerializeField] private Vector2Int _pos;
-	public Vector2Int Pos { get => _pos; private set => _pos = value; }
+	public Vector2Int Pos { get => _pos; }
 
 	[SerializeField] private int _movement;
 	private bool _selected = false;
@@ -54,7 +55,7 @@ public class Unit : MonoBehaviour
 		Vector3 tilePos = tile.gameObject.transform.position;
 
 		gameObject.transform.SetPositionAndRotation(new Vector3(tilePos.x, tilePos.y, gameObject.transform.position.z), Quaternion.identity);
-		Pos = tile.Coordinates;
+		_pos = tile.Coordinates;
 		_validMoves = null;
 	}
 
@@ -72,12 +73,21 @@ public class Unit : MonoBehaviour
 		if (_selected)
 		{
 			foreach (GridTile tile in ValidMoves)
-				tile.SetColor(Color.blue);
+			{
+				GameObject selectionBox = Instantiate(_map.HighlightBox, Vector3.zero, Quaternion.identity);
+				selectionBox.transform.SetParent(tile.gameObject.transform, false);
+				selectionBox.GetComponent<SpriteRenderer>().color = GridTile.MovementHighlight;
+			}
 		}
 		else
 		{
-			foreach (GridTile tile in _map.EnumerateTiles().Select(it => it.GetComponent<GridTile>()))
-				tile.ResetColor();
+			foreach (GridTile tile in _map.EnumerateTileObjects().Select(it => it.GetComponent<GridTile>()))
+			{
+				foreach (Transform child in tile.gameObject.transform)
+				{
+					Destroy(child.gameObject);
+				}
+			}
 		}
 	}
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.TerrainUtils;
 
 #nullable enable
 public class GridTile : MonoBehaviour
@@ -11,8 +12,7 @@ public class GridTile : MonoBehaviour
 	public Color Color { get; private set; }
 	public int MovementCost { get; private set; } = 1;
 
-	private static Color Black2Mov = new Color(0, .5f, 0);
-	private static Color White2Mov = new Color(.5f, 1, .5f);
+	public static readonly Color MovementHighlight = new Color(0, 0, 1, .5f);
 
 	private GridTile() { }
 
@@ -25,12 +25,7 @@ public class GridTile : MonoBehaviour
 		self.MovementCost = Random.Range(0, 10) == 0 ? 2 : 1;
 		if (self.MovementCost > 1)
 		{
-			if (self.Color == Color.black)
-				self.Color = Black2Mov;
-			else
-				self.Color = White2Mov;
-
-			obj.GetComponent<SpriteRenderer>().color = self.Color;
+			obj.GetComponent<SpriteRenderer>().sprite = obj.GetComponentInParent<Grid>().ForestSprite;
 		}
 
 		return self;
