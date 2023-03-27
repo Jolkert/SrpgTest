@@ -1,6 +1,7 @@
-using System.Collections;
+using Assets.Scripts;
+using Assets.Scripts.Data;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using System.Linq;
 using UnityEngine;
 
 public class Grid : MonoBehaviour
@@ -13,16 +14,20 @@ public class Grid : MonoBehaviour
 	[SerializeField] private GameObject _highlightBox;
 
 	private GameObject[][] _tiles;
+	private readonly List<Unit> _playerUnits = new List<Unit>();
+	private readonly List<Unit> _enemyUnits = new List<Unit>();
 
-	public int Width { get => _width; }
-	public int Height { get => _height; }
-	public Sprite ForestSprite { get => _forestSprite; }
-	public GameObject HighlightBox { get => _highlightBox; }
+	public int Width => _width;
+	public int Height => _height;
+	public Sprite ForestSprite => _forestSprite;
+	public GameObject HighlightBox => _highlightBox;
+
+	public Side Phase { get; private set; } = Side.Player;
 
 	void Awake()
 	{
+		// init size & grid
 		_tiles = new GameObject[Width][];
-		// this is hella ugly lol -morgan 2023-03-24
 		for (int i = 0; i < _tiles.Length; i++)
 		{
 			_tiles[i] = new GameObject[Height];
@@ -33,15 +38,38 @@ public class Grid : MonoBehaviour
 				tile.transform.SetParent(gameObject.transform, false);
 				GridTile.AddTo(tile, new Vector2Int(i, j));
 
-				_tiles[i][j] = tile;				
+				_tiles[i][j] = tile;
 			}
 		}
+
+		// init unit lists
+		GameObject.FindGameObjectsWithTag("unit_player")
+					.Select(obj => obj.GetComponent<Unit>())
+					.ForEach(unit => _playerUnits.Add(unit));
+		GameObject.FindGameObjectsWithTag("unit_enemy")
+					.Select(obj => obj.GetComponent<Unit>())
+					.ForEach(unit => _enemyUnits.Add(unit));
 	}
 
 	public GridTile GetTile(int x, int y) => _tiles[x][y].GetComponent<GridTile>();
 	public GridTile GetTile(Vector2Int position) => GetTile(position.x, position.y);
 
-	public void SetTileColor(int x, int y, Color color) => _tiles[x][y].GetComponent<SpriteRenderer>().color = color;
+	public void RegisterUnit(Unit unit)
+	{
+
+	}
+	public void OnUnitAction(Unit unit)
+	{
+
+	}
+
+	public void SwitchPhase()
+	{
+		Phase = Phase == Side.Player ? Side.Enemy : Side.Player;
+
+		foreach (var unit in _playerUnits.Concat(_enemyUnits))
+			unit.ResetTurn();
+	}
 
 	public IEnumerable<GameObject> EnumerateTileObjects()
 	{

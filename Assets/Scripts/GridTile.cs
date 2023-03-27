@@ -1,9 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
+using Assets.Scripts.Data;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.TerrainUtils;
 
 #nullable enable
 public class GridTile : MonoBehaviour
@@ -13,6 +11,8 @@ public class GridTile : MonoBehaviour
 	public int MovementCost { get; private set; } = 1;
 
 	public static readonly Color MovementHighlight = new Color(0, 0, 1, .5f);
+
+	public Side OccupiedBy = Side.None;
 
 	private GridTile() { }
 
@@ -31,10 +31,22 @@ public class GridTile : MonoBehaviour
 		return self;
 	}
 
-	public void ResetColor() => gameObject.GetComponent<SpriteRenderer>().color = Color;
-	public void SetColor(Color color) => gameObject.GetComponent<SpriteRenderer>().color = color;
+	public void Highlight() => Highlight(MovementHighlight);
+	public void Highlight(Color color)
+	{
+		GameObject selectionBox = Instantiate(GetComponentInParent<Grid>().HighlightBox, Vector3.zero, Quaternion.identity);
+		selectionBox.transform.SetParent(gameObject.transform, false);
+		selectionBox.GetComponent<SpriteRenderer>().color = color;
+	}
+	public void ResetHighlight()
+	{
+		foreach (Transform child in transform)
+			Destroy(child.gameObject);
+	}
 
-	private void OnMouseDown()
+	public bool UnitCanPassThrough(Unit unit) => OccupiedBy == Side.None || OccupiedBy == unit.Side;
+
+	private void OnMouseUpAsButton()
 	{
 		GameObject? selectedUnitObj = SceneManager.GetActiveScene().GetRootGameObjects().SingleOrDefault(it => it.CompareTag("selected_unit"));
 		if (selectedUnitObj is null)

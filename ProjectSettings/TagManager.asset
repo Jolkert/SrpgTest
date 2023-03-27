@@ -7,7 +7,8 @@ TagManager:
   - grid
   - grid_tile
   - selected_unit
-  - unit
+  - unit_player
+  - unit_enemy
   layers:
   - Default
   - TransparentFX
