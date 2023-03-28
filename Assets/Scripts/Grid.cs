@@ -1,5 +1,6 @@
 using Assets.Scripts;
 using Assets.Scripts.Data;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -22,6 +23,9 @@ public class Grid : MonoBehaviour, IEnumerable<GridTile>, IEnumerable
 	[SerializeField] private TextMeshProUGUI _phaseText = null!;
 
 	private GameObject[][] _tiles = null!;
+	public GridTile this[int x, int y] => GetTile(x, y);
+	public GridTile this[Vector2Int coodrinates] => this[coodrinates.x, coodrinates.y];
+
 	private readonly List<Unit> _playerUnits = new List<Unit>();
 	private readonly List<Unit> _enemyUnits = new List<Unit>();
 	private IEnumerable<Unit> AllUnits => _playerUnits.Concat(_enemyUnits);
@@ -64,7 +68,6 @@ public class Grid : MonoBehaviour, IEnumerable<GridTile>, IEnumerable
 		_phaseText.text = "Player Phase";
 	}
 
-	public GridTile GetTile(Vector2Int position) => GetTile(position.x, position.y);
 	public GridTile GetTile(int x, int y) => _tiles[x][y].GetComponent<GridTile>();
 
 	public bool PositionInBounds(Vector2Int position) => PositionInBounds(position.x, position.y);
@@ -81,7 +84,7 @@ public class Grid : MonoBehaviour, IEnumerable<GridTile>, IEnumerable
 		return inBounds;
 	}
 
-	public void OnUnitMove(Unit triggerUnit)
+	public void OnUnitAction(Unit triggerUnit)
 	{
 		foreach (Unit unit in AllUnits)
 			unit.ResetValidMoves();
@@ -115,7 +118,11 @@ public class Grid : MonoBehaviour, IEnumerable<GridTile>, IEnumerable
 		_debugText.text = text;
 	}
 
-
+	public void ForEach(Action<GridTile> action)
+	{
+		foreach (GridTile tile in this)
+			action(tile);
+	}
 	#region IEnumerable<GridTile> implementation
 	public IEnumerator<GridTile> GetEnumerator() => new GridTileEnumerator(this);
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -123,7 +130,7 @@ public class Grid : MonoBehaviour, IEnumerable<GridTile>, IEnumerable
 	public class GridTileEnumerator : IEnumerator<GridTile>, IEnumerator
 	{
 		private readonly Grid _grid;
-		private int _currentX = 0, _currentY = 0;
+		private int _currentX = 0, _currentY = -1;
 		private GameObject[][] Tiles => _grid._tiles;
 
 		public GridTile Current { get; private set; }
@@ -133,7 +140,7 @@ public class Grid : MonoBehaviour, IEnumerable<GridTile>, IEnumerable
 		public GridTileEnumerator(Grid grid)
 		{
 			_grid = grid;
-			Current = _grid.GetTile(0, 0);
+			Current = null!;
 		}
 
 

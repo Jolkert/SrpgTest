@@ -3,6 +3,7 @@ using Assets.Scripts.Data;
 using Assets.Scripts.Extensions;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,7 +14,7 @@ public class Unit : MonoBehaviour
 	public static readonly Color InactiveColor = new Color(.3f, .3f, .3f);
 
 	// instance
-	private bool _isStarted = false;
+	private bool _isStarted = false; // compiler claims that the value is never used but it literally is in MoveTo()??? u good compiler? -morgan 2023-03-28
 	private Grid _map = null!;
 
 	[SerializeField] private Vector2Int _pos;
@@ -45,32 +46,74 @@ public class Unit : MonoBehaviour
 	private bool _selected = false;
 	private GameObject? _selectedBox = null;
 
+	private Vector2Int _awaitingPos;
+	private Vector3 _prevObjectPos;
+	public bool AwaitingAction { get; private set; } = false;
+	public List<GridTile>? AwaitingAttackRange { get; private set; } = null;
+
 	private void Start()
 	{// Before first frame update
 		CurrentHp = _stats.MaxHp;
 
 		_map = SceneManager.GetActiveScene().GetRootGameObjects().First(it => it.CompareTag("grid")).GetComponent<Grid>();
-		MoveTo(_map.GetTile(_pos));
+		MoveTo(_map[_pos]);
 
 		_isStarted = true;
 	}
+	private void Update()
+	{
+		if (_selected && AwaitingAction)
+			ProcessKeyInput();
+	}
 	private void OnMouseUpAsButton()
 	{
-		if (HasMoved || _map.Phase != _side)
-			return;
+		// unity's fake null makes me so fucking sad. please just let me use null propagation -morgan 2023-03-28
+		GameObject? temp = GameObject.FindGameObjectsWithTag("selected_unit").FirstOrDefault();
+		Unit? selectedUnit = temp != null ? temp.GetComponent<Unit>() : null;
 
-		if (!_selected)
+		if (selectedUnit == null)
 		{
-			GameObject? selectedUnit = GameObject.FindGameObjectsWithTag("selected_unit").FirstOrDefault();
-			if (selectedUnit is not null)
+			if (!HasMoved && _map.Phase == Side)
+				SetSelected(true);
+		}
+		else
+		{
+			if (selectedUnit == this)
 			{
-				selectedUnit.GetComponent<Unit>().SetSelected(false);
+				SetSelected(false);
+				return;
 			}
+
+			if (selectedUnit.AwaitingAction && selectedUnit.AwaitingAttackRange.Select(tile => tile.Coordinates).Contains(_pos))
+				selectedUnit.AttackAction(this);
 		}
 
-		SetSelected(!_selected);
+		//if (HasMoved || _map.Phase != _side)
+		//	return;
+		//
+		//if (!_selected)
+		//{
+		//	GameObject? selectedUnit = GameObject.FindGameObjectsWithTag("selected_unit").FirstOrDefault();
+		//	if (selectedUnit is not null)
+		//	{
+		//		selectedUnit.GetComponent<Unit>().SetSelected(false);
+		//	}
+		//}
+		//
+		//SetSelected(!_selected);
+	}
+	private void OnMouseOver()
+	{
+		_map.SetDebugText(CreateDebugString());
 	}
 
+	private void ProcessKeyInput()
+	{
+		if (Input.GetKeyUp(KeyCode.Escape))
+			UndoMovement();
+		else if (Input.GetKeyUp(KeyCode.Return) || Input.GetKeyUp(KeyCode.KeypadEnter))
+			WaitAction();
+	}
 
 	public void SetSelected(bool selected)
 	{
@@ -84,35 +127,59 @@ public class Unit : MonoBehaviour
 			gameObject.tag = _side.ToUnitTag();
 
 		if (_selected)
-		{
 			ValidMoves.ForEach(entry => entry.Key.Highlight(entry.Value));
-			_map.SetDebugText(CreateDebugString());
-		}
 		else
-		{
 			_map.ForEach(tile => tile.ResetHighlight());
-			_map.SetDebugText("");
-		}
 	}
 	public void MoveTo(GridTile tile)
 	{
-		_map.GetTile(_pos).OccupiedBy = Side.None;
-		tile.OccupiedBy = Side;
+		_prevObjectPos = transform.position;
 
 		Vector3 tilePos = tile.gameObject.transform.position;
+		gameObject.transform.SetPositionAndRotation(new Vector3(tilePos.x, tilePos.y, transform.position.z), Quaternion.identity);
+		if (!_isStarted)
+			return;
+		
+		AwaitingAction = true;
+		_awaitingPos = tile.Coordinates;
 
-		gameObject.transform.SetPositionAndRotation(new Vector3(tilePos.x, tilePos.y, gameObject.transform.position.z), Quaternion.identity);
-		_pos = tile.Coordinates;
+		_map.ForEach(t => t.ResetHighlight());
 
-		if (_isStarted)
-		{
-			HasMoved = true;
-			SetColor(InactiveColor);
-			_map.OnUnitMove(this);
-		}
-
-		_validMoves = null;
+		AwaitingAttackRange = tile.GetTilesWithinRange(Weapon.Range).ToList();
+		AwaitingAttackRange.ForEach(t => t.Highlight(RangeType.Attack));
 	}
+	public void UndoMovement()
+	{
+		transform.SetPositionAndRotation(_prevObjectPos, Quaternion.identity);
+		SetSelected(false);
+		AwaitingAction = false;
+		_map.ForEach(t => t.ResetHighlight());
+	}
+
+	public void Action()
+	{
+		HasMoved = true;
+		SetColor(InactiveColor);
+		_map.OnUnitAction(this);
+
+		AwaitingAction = false;
+		SetSelected(false);
+	}
+	public void AttackAction(Unit target)
+	{
+		int dmg = System.Math.Max(0, Atk - (Weapon.IsMagic ? target.Stats.Res : target.Stats.Def));
+		target.CurrentHp = System.Math.Max(0, target.CurrentHp - dmg);
+
+		Debug.Log($"{gameObject.name} dealt {dmg} damage to {target.gameObject.name}");
+
+		Action();
+	}
+	public void WaitAction()
+	{
+		_pos = _awaitingPos;
+		Action();
+	}
+
 	public void SetColor(Color color)
 	{
 		gameObject.GetComponent<SpriteRenderer>().color = color;
@@ -128,7 +195,7 @@ public class Unit : MonoBehaviour
 		Dictionary<GridTile, int> visited = new();
 		HashSet<GridTile> attackRange = new();
 
-		RecalculateMovementArea(_map.GetTile(_pos), _stats.Mov, visited, attackRange);
+		RecalculateMovementArea(_map[_pos], _stats.Mov, visited, attackRange);
 
 		Dictionary<GridTile, RangeType> movementArea = new();
 		foreach (GridTile tile in attackRange)

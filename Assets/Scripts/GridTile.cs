@@ -39,14 +39,15 @@ public class GridTile : MonoBehaviour
 	private void OnMouseUpAsButton()
 	{
 		GameObject? selectedUnitObj = SceneManager.GetActiveScene().GetRootGameObjects().SingleOrDefault(it => it.CompareTag("selected_unit"));
-		if (selectedUnitObj is null)
+		if (selectedUnitObj == null)
 			return;
 
 		Unit selectedUnit = selectedUnitObj.GetComponent<Unit>();
+		if (selectedUnit.AwaitingAction)
+			return;
+
 		if (selectedUnit.ValidMoves.ContainsKey(this) && selectedUnit.ValidMoves[this] == RangeType.Movement)
 			selectedUnit.MoveTo(this);
-
-		selectedUnit.SetSelected(false);
 	}
 
 	public void Highlight() => Highlight(MovementHighlight);
@@ -79,8 +80,12 @@ public class GridTile : MonoBehaviour
 	public IEnumerable<GridTile> GetTilesWithinRange(Weapon.WeaponRange range)
 	{
 		if (range == 1)
+		{
 			foreach (GridTile neighbor in GetNeighbors())
 				yield return neighbor;
+
+			yield break;
+		}
 
 		UniqueQueue<(GridTile tile, int depth)> processingQueue = new();
 		List<GridTile> visited = new();
