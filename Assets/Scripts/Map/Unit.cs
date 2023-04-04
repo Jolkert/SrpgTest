@@ -151,7 +151,7 @@ public class Unit : MonoBehaviour
 			Debug.Log($"{(critMultiplier == 1 ? "Hit!" : "Crit!")}\n{target.name} takes {damage} damge (hp: {target.CurrentHp}/{target._stats.MaxHp})");
 		}
 	}
-	public void TakeDamage(int damage) => CurrentHp = Clamp(damage, 0, _stats.MaxHp);
+	public void TakeDamage(int damage) => CurrentHp = Clamp(CurrentHp - damage, 0, _stats.MaxHp);
 	public bool CanAttack(Unit target)
 	{
 		Vector2Int targetPos = target.IsAwaitingAction ? target._awaitingPos : target.Position;
