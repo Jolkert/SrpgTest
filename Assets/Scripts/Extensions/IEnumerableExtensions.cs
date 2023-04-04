@@ -16,5 +16,11 @@ namespace Assets.Scripts
 				foreach (T item in subarr)
 					yield return item;
 		}
+		public static IEnumerable<TUnderlying> ConcatenateAllValues<TKey, TValue, TUnderlying>(this IDictionary<TKey, TValue> self) where TValue : IEnumerable<TUnderlying>
+		{
+			foreach ((TKey _, IEnumerable<TUnderlying> value) in self)
+				foreach (TUnderlying item in value)
+					yield return item;
+		}
 	}
 }

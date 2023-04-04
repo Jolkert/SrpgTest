@@ -4,11 +4,13 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - grid
-  - grid_tile
   - selected_unit
   - unit_player
   - unit_enemy
+  - map_background
+  - map_highlight
+  - grid
+  - unit_foreground
   layers:
   - Default
   - TransparentFX
@@ -48,6 +50,9 @@ TagManager:
     locked: 0
   - name: Map Background
     uniqueID: 2895634473
+    locked: 0
+  - name: Map Highlight
+    uniqueID: 4094039267
     locked: 0
   - name: Unit Background
     uniqueID: 4016775279
