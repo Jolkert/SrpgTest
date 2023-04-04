@@ -7,6 +7,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static System.Math;
+using TileData = MapTile.MapTileData;
 
 #nullable enable
 public class Unit : MonoBehaviour
@@ -32,10 +33,13 @@ public class Unit : MonoBehaviour
 	public int Atk => _weapon.Mt + (_weapon.IsMagic ? _stats.Mag : _stats.Str);
 	public int AttackSpeed => _stats.Spd - Max(_weapon.Wt - _stats.Con, 0);
 
-	public int Hit => _weapon.Hit + _stats.Dex * 2 + _stats.Lck / 2;
-	public int Avo => AttackSpeed * 2 + _stats.Lck / 2;
+	public int Hit => _weapon.Hit + (_stats.Dex * 2 + _stats.Lck / 2) ;
+	public int Avo => (AttackSpeed * 2 + _stats.Lck / 2) + _currentTile.AvoBonus;
 	public int Crit => Weapon.Crit + _stats.Dex / 2;
 	public int Ddg => _stats.Lck;
+
+	public int Prt => _stats.Def + _currentTile.DefBonus;
+	public int Rsl => _stats.Res + _currentTile.ResBonus;
 
 	public int CurrentHp { get; private set; }
 	public bool HasMoved { get; private set; } = false;
@@ -45,6 +49,7 @@ public class Unit : MonoBehaviour
 
 	public bool IsSelected { get; private set; } = false;
 
+	public TileData _currentTile = TileData.Default;
 	private Vector2Int _awaitingPos;
 	private Vector3 _prevObjectPos;
 
@@ -72,11 +77,13 @@ public class Unit : MonoBehaviour
 			_map.ResetAllHighlights();
 	}
 
-	public void MoveTo(Vector2Int tilePos)
+	public void MoveTo(Vector2Int newLocation)
 	{
 		_map[Position].OccupyingUnit = null;
-		_position = tilePos;
-		_map[Position].OccupyingUnit = this;
+		_position = newLocation;
+
+		_map[newLocation].OccupyingUnit = this;
+		_currentTile = _map[newLocation].Data;
 	}
 	public void AwaitActionAt(MapTile tile)
 	{
@@ -111,6 +118,7 @@ public class Unit : MonoBehaviour
 	}
 	public void InitiateCombatWith(Unit target)
 	{
+		MoveTo(_awaitingPos); // this is technically sorta cringe cause we do it again as soon as we call Action(), but this means that we dont have to do any bs for tile avo stuff -morgan 2023-04-04
 		Debug.Log($"------ START COMBAT ------");
 
 		Attack(target);
@@ -128,14 +136,15 @@ public class Unit : MonoBehaviour
 		Debug.Log($"------ END COMBAT ------");
 		Action();
 	}
+	public void WaitAction() => Action();
 
 	public void Attack(Unit target)
 	{
-		int targetPrt = Weapon.IsMagic ? target.Stats.Res : target.Stats.Def;
+		int targetDefensiveStat = Weapon.IsMagic ? target.Rsl : target.Prt;
 		int hitChance = Clamp(Hit - target.Avo, 0, 100);
 		int critChance = Clamp(Crit - target.Ddg, 0, 100);
 
-		Debug.Log($"{name} attacks {target.name}\nAtk: {Atk} | Prt: {targetPrt} | Hit: {hitChance}% | Crit: {critChance}%");
+		Debug.Log($"{name} attacks {target.name}\nAtk: {Atk} | {(Weapon.IsMagic ? "Rsl" : "Prt")}: {targetDefensiveStat} | Hit: {hitChance}% | Crit: {critChance}%");
 
 		int hitRn = SharedResources.Random.Next();
 		int critRn = SharedResources.Random.Next();
@@ -145,7 +154,7 @@ public class Unit : MonoBehaviour
 		else
 		{
 			int critMultiplier = critRn < critChance ? 3 : 1;
-			int damage = Max(0, Atk - targetPrt);
+			int damage = Max(0, Atk - targetDefensiveStat);
 			target.TakeDamage(damage);
 
 			Debug.Log($"{(critMultiplier == 1 ? "Hit!" : "Crit!")}\n{target.name} takes {damage} damge (hp: {target.CurrentHp}/{target._stats.MaxHp})");
@@ -157,8 +166,6 @@ public class Unit : MonoBehaviour
 		Vector2Int targetPos = target.IsAwaitingAction ? target._awaitingPos : target.Position;
 		return _map.GetTilesWithinRangeOf(_map[Position], Weapon.Range).Select(tile => tile.Position).Contains(targetPos);
 	}
-
-	public void WaitAction() => Action();
 
 	public void SetColor(Color color)
 	{
