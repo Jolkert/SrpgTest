@@ -17,6 +17,10 @@ namespace Assets.Scripts.Structure
 		{
 			_random = new Random(seed);
 		}
+		public PeekableRandom(object seed)
+		{
+			_random = new Random(seed.GetHashCode());
+		}
 
 		public int Generate()
 		{
