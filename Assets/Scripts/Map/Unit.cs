@@ -38,8 +38,8 @@ public class Unit : MonoBehaviour
 	public int Crit => Weapon.Crit + _stats.Dex / 2;
 	public int Ddg => _stats.Lck;
 
-	public int Prt => _stats.Def + _currentTile.DefBonus;
-	public int Rsl => _stats.Res + _currentTile.ResBonus;
+	public int EffectiveDef => _stats.Def + _currentTile.DefBonus;
+	public int EffectiveRes => _stats.Res + _currentTile.ResBonus;
 
 	public int CurrentHp { get; private set; }
 	public bool HasMoved { get; private set; } = false;
@@ -140,11 +140,11 @@ public class Unit : MonoBehaviour
 
 	public void Attack(Unit target)
 	{
-		int targetDefensiveStat = Weapon.IsMagic ? target.Rsl : target.Prt;
+		int targetDefensiveStat = Weapon.IsMagic ? target.EffectiveRes : target.EffectiveDef;
 		int hitChance = Clamp(Hit - target.Avo, 0, 100);
 		int critChance = Clamp(Crit - target.Ddg, 0, 100);
 
-		Debug.Log($"{name} attacks {target.name}\nAtk: {Atk} | {(Weapon.IsMagic ? "Rsl" : "Prt")}: {targetDefensiveStat} | Hit: {hitChance}% | Crit: {critChance}%");
+		Debug.Log($"{name} attacks {target.name}\nAtk: {Atk} | {(Weapon.IsMagic ? "Res" : "Def")}: {targetDefensiveStat} | Hit: {hitChance}% | Crit: {critChance}%");
 
 		int hitRn = SharedResources.Random.Next();
 		int critRn = SharedResources.Random.Next();
