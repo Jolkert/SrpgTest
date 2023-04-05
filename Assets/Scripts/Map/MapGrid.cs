@@ -205,7 +205,7 @@ public class MapGrid : MonoBehaviour, IEnumerable<MapTile>, IEnumerable
 		bool allMoved = true;
 		foreach (Unit unit in _units[triggerUnit.Side])
 		{
-			if (!unit.HasMoved)
+			if (!unit.HasMoved && unit.gameObject.activeSelf)
 			{
 				allMoved = false;
 				break;
@@ -214,6 +214,12 @@ public class MapGrid : MonoBehaviour, IEnumerable<MapTile>, IEnumerable
 
 		if (allMoved)
 			SwitchPhase();
+	}
+	public void OnUnitDie(Unit triggerUnit)
+	{
+		_units[triggerUnit.Side].Remove(triggerUnit);
+		if (_units[triggerUnit.Side].Count == 0)
+			Debug.Log("Battle is over"); // TODO actually implement some logic here lol -morgan 2023-04-05
 	}
 
 	// State handling

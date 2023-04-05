@@ -11,6 +11,8 @@ TagManager:
   - map_highlight
   - grid
   - unit_foreground
+  - grid_tile
+  - health_bar
   layers:
   - Default
   - TransparentFX

@@ -17,6 +17,7 @@ public class Unit : MonoBehaviour
 
 	// instance
 	private MapGrid _map = null!;
+	[SerializeField] private Transform _healthBar = null!;
 
 	[SerializeField] private Vector2Int _position;
 	public Vector2Int Position => _position;
@@ -53,8 +54,11 @@ public class Unit : MonoBehaviour
 	private Vector2Int _awaitingPos;
 	private Vector3 _prevObjectPos;
 
+	public Vector2Int CombatPos => IsAwaitingAction ? _awaitingPos : _position;
+
 	public bool IsAwaitingAction { get; private set; } = false;
 	public List<MapTile>? AwaitingAttackRange { get; private set; } = null;
+
 
 	private void Start()
 	{// Before first frame update
@@ -118,7 +122,6 @@ public class Unit : MonoBehaviour
 	}
 	public void InitiateCombatWith(Unit target)
 	{
-		MoveTo(_awaitingPos); // this is technically sorta cringe cause we do it again as soon as we call Action(), but this means that we dont have to do any bs for tile avo stuff -morgan 2023-04-04
 		Debug.Log($"------ START COMBAT ------");
 
 		Attack(target);
@@ -160,12 +163,23 @@ public class Unit : MonoBehaviour
 			Debug.Log($"{(critMultiplier == 1 ? "Hit!" : "Crit!")}\n{target.name} takes {damage} damge (hp: {target.CurrentHp}/{target._stats.MaxHp})");
 		}
 	}
-	public void TakeDamage(int damage) => CurrentHp = Clamp(CurrentHp - damage, 0, _stats.MaxHp);
-	public bool CanAttack(Unit target)
+	public void TakeDamage(int damage)
 	{
-		Vector2Int targetPos = target.IsAwaitingAction ? target._awaitingPos : target.Position;
-		return _map.GetTilesWithinRangeOf(_map[Position], Weapon.Range).Select(tile => tile.Position).Contains(targetPos);
+		CurrentHp = Clamp(CurrentHp - damage, 0, _stats.MaxHp);
+		if (_healthBar != null)
+			_healthBar.localScale = new Vector3((float)CurrentHp / Stats.MaxHp, _healthBar.localScale.y);
+
+		if (CurrentHp <= 0)
+			Die();
 	}
+	public void Die()
+	{
+		_map[CombatPos].OccupyingUnit = null;
+		gameObject.SetActive(false);
+		_map.OnUnitDie(this);
+	}
+
+	public bool CanAttack(Unit target) => _map.GetTilesWithinRangeOf(_map[Position], Weapon.Range).Select(tile => tile.Position).Contains(target.CombatPos);
 
 	public void SetColor(Color color)
 	{
