@@ -17,7 +17,8 @@ public class Unit : MonoBehaviour
 
 	// instance
 	private MapGrid _map = null!;
-	[SerializeField] private Transform _healthBar = null!;
+	[SerializeField] private GameObject _healthBarPrefab = null!;
+	private Transform HealthBar { get; set; } = null!;
 
 	[SerializeField] private Vector2Int _position;
 	public Vector2Int Position => _position;
@@ -63,6 +64,9 @@ public class Unit : MonoBehaviour
 	private void Start()
 	{// Before first frame update
 		CurrentHp = _stats.MaxHp;
+		GameObject healthBarObject = Instantiate(_healthBarPrefab);
+		HealthBar = healthBarObject.transform.GetChild(1);
+		healthBarObject.transform.SetParent(transform, false);
 
 		_map = SceneManager.GetActiveScene().GetRootGameObjects().First(it => it.CompareTag("grid")).GetComponent<MapGrid>();
 		MoveTo(Position);
@@ -166,8 +170,8 @@ public class Unit : MonoBehaviour
 	public void TakeDamage(int damage)
 	{
 		CurrentHp = Clamp(CurrentHp - damage, 0, _stats.MaxHp);
-		if (_healthBar != null)
-			_healthBar.localScale = new Vector3((float)CurrentHp / Stats.MaxHp, _healthBar.localScale.y);
+		if (HealthBar != null)
+			HealthBar.localScale = new Vector3((float)CurrentHp / Stats.MaxHp, HealthBar.localScale.y);
 
 		if (CurrentHp <= 0)
 			Die();

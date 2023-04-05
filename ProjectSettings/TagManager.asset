@@ -65,3 +65,6 @@ TagManager:
   - name: Unit Foreground
     uniqueID: 1548814375
     locked: 0
+  - name: Health Bar
+    uniqueID: 2622606191
+    locked: 0
