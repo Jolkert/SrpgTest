@@ -154,7 +154,7 @@ public class Unit : MonoBehaviour
 		else
 		{
 			int critMultiplier = critRn < critChance ? 3 : 1;
-			int damage = Max(0, Atk - targetDefensiveStat);
+			int damage = Max(0, Atk - targetDefensiveStat) * critMultiplier;
 			target.TakeDamage(damage);
 
 			Debug.Log($"{(critMultiplier == 1 ? "Hit!" : "Crit!")}\n{target.name} takes {damage} damge (hp: {target.CurrentHp}/{target._stats.MaxHp})");
